@@ -34,11 +34,20 @@ contract Employee is Ownable, AccessControl {
     event EmployeeRemoved(uint256 indexed id);
     event EmployeeUpdated(uint256 indexed id, EmployeeDetails employeeDetails);
 
-    // Functions
+    // Constructor
     constructor() Ownable(msg.sender) {
         _grantRole(MANAGER, msg.sender);
     }
 
+    // Modifiers
+    modifier checkWalletAddress(address _walletAddress) {
+        if (_walletAddress == address(0)) {
+            revert Employee__InvalidWalletAddress();
+        }
+        _;
+    }
+
+    // Functions
     /**
      * @notice Add new employee
      * @param _name of the employee
@@ -53,11 +62,7 @@ contract Employee is Ownable, AccessControl {
         uint256 _dailySalary,
         uint256 _totalAnnualLeave,
         address _walletAddress
-    ) external onlyRole(MANAGER) {
-        if (_walletAddress == address(0)) {
-            revert Employee__InvalidWalletAddress();
-        }
-
+    ) external onlyRole(MANAGER) checkWalletAddress(_walletAddress) {
         s_idNonce++;
 
         EmployeeDetails memory currentEmployee = EmployeeDetails(
@@ -89,7 +94,10 @@ contract Employee is Ownable, AccessControl {
      * @param _id of the employee to update
      * @param _employeeDetails fields to update
      */
-    function updateEmployee(uint256 _id, EmployeeDetails memory _employeeDetails) external onlyRole(MANAGER) {
+    function updateEmployee(
+        uint256 _id, 
+        EmployeeDetails memory _employeeDetails
+    ) external onlyRole(MANAGER) checkWalletAddress(_employeeDetails.walletAddress) {
         EmployeeDetails memory updatedFields = EmployeeDetails({
             id: _id,
             name: _employeeDetails.name,
